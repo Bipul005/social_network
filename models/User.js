@@ -4,12 +4,14 @@ const mongoose = require("mongoose");
 // Define the user schema using the Mongoose Schema constructor
 const userSchema = new mongoose.Schema(
 	{
+
+		/*
 		// Use UUID for the _id field
 		_id: {
 			type: String,
 			default: uuidv4,
 		},
-			
+			*/
 		// Other fields remain unchanged
 		firstName: {
 			type: String,
@@ -39,6 +41,10 @@ const userSchema = new mongoose.Schema(
 			type: Boolean,
 			default: true,
 		},
+		post:[{
+			type:mongoose.Schema.Types.ObjectId,
+			ref:"Post",
+		}],
 		additionalDetails: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: "Profile",
@@ -53,6 +59,16 @@ const userSchema = new mongoose.Schema(
 		image: {
 			type: String,
 		},
+		followers:[{
+			type:mongoose.Schema.Types.ObjectId,
+			ref:"User",
+			default: [],
+		}],
+		following:[{
+			type:mongoose.Schema.Types.ObjectId,
+			ref:"User",
+			default: [],
+		}],
 		
 	},
 	{ timestamps: true }

@@ -16,12 +16,13 @@ const{
     getFollowersList
 }= require("../controllers/Followers")
 const{followeeId}= require("../controllers/Follow_Unfollow");
-router.post("/followUser/:followeeId",auth, followUser)
-router.post("/unfollowUser/:followeeId",auth, unfollowUser)
-router.get("/getLatestPostsFromFollowedUsers",auth, getLatestPostsFromFollowedUsers)
-router.get("/getFollowingList",auth, getFollowingList)
-router.get("/getFollowersList",auth, getFollowersList)
+router.post("/followUser/:userId",auth, followUser)
+router.post("/unfollowUser/:userId",auth, unfollowUser)
+router.get("/getLatestPostsFromFollowedUsers/:userId",auth, getLatestPostsFromFollowedUsers)
+router.get("/getFollowingList/:userId",auth, getFollowingList)
+router.get("/getFollowersList/:userId",auth, getFollowersList)
 
 module.exports = router;
+
 
 

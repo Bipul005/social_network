@@ -5,51 +5,46 @@ const mongoose = require('mongoose');
 // followuser
 exports.followUser = async (req, res) => {
     try {
-        const followerId = req.user ? req.user._id : null;
-        const followeeId = req.params.followeeId;
-
-        console.log("Followee ID:", followeeId);
-
-        const usertoFollow = await User.findById(followeeId);
-
+        const {_Id} = req.body;
+        const {userId} = req.params;
+    
+        const usertoFollow = await User.findById(userId);
+        const loggedinuser = await User.findById(_Id);
+        console.log(usertoFollow);
+        console.log("existing");
+        console.log(loggedinuser);
+        
         if (!usertoFollow) {
             return res.status(404).json({
                 success: false,
                 message: "User to follow not found",
             });
         }
-
-        const existingFollow = await Follow.findOne({ followerId, followeeId });
-        if (existingFollow) {
+    
+        if (!loggedinuser) {
+            return res.status(404).json({
+                success: false,
+                message: "Logged-in user not found",
+            });
+        }
+    
+        console.log("existing not");
+    
+        // Check if the loggedinuser is already following the user
+        if ( loggedinuser.following.includes(userId)) {
             return res.status(400).json({
                 error: "User is already being followed",
             });
         }
-
-        // Convert followeeId to ObjectId
-        const followeeObjectId =  mongoose.Types.ObjectId(followeeId);
-
-        const follow = new Follow({ followerId, followeeId: followeeObjectId });
-        const savedFollow = await follow.save();
-
-        const followerUser = await User.findById(followerId);
-        const followeeUser = await User.findById(followeeObjectId);
-
-        if (!followerUser || !followeeUser) {
-            return res.status(404).json({
-                success: false,
-                message: "User not found",
-            });
-        }
-
-        followeeUser.followerId.push(followerUser._id);
-        await followeeUser.save();
-
-        followerUser.followeeId.push(usertoFollow._id);
-        await followerUser.save();
-
+    
+        loggedinuser.following.push(usertoFollow._id);
+        usertoFollow.followers.push(loggedinuser._id);
+    
+        await loggedinuser.save();
+        await usertoFollow.save();
+    
         res.json({
-            follow: savedFollow,
+            message: "User followed successfully",
         });
     } catch (err) {
         console.error(err);
@@ -57,6 +52,7 @@ exports.followUser = async (req, res) => {
             error: "Error while following user",
         });
     }
+    
 };
 
 
@@ -68,30 +64,35 @@ exports.followUser = async (req, res) => {
 
 // Unfollow a user
 exports.unfollowUser = async (req, res) => {
-    try {
-        const followerId = req.user._id; // Assuming user information is available in the request
-        const { followeeId } = req.body;
+    const {userId}=req.params
+    const {_Id}=req.body
 
-        // Check if the user is not trying to unfollow themselves
-        if (followerId.equals(followeeId)) {
-            return res.status(400).json({
-                error: "Cannot unfollow yourself",
-            });
+    try{
+        if(userId===_Id){
+            throw new CustomError("You can not unfollow yourself",500)
         }
 
-        // Check if the user is currently following the target user
-        const existingFollow = await Follow.findOne({ followerId, followeeId });
-        if (!existingFollow) {
-            return res.status(400).json({
-                error: "User is not being followed",
-            });
+        const userToUnfollow=await User.findById(userId)
+        const loggedInUser=await User.findById(_Id)
+
+      
+
+        if(!userToUnfollow || !loggedInUser){
+            throw new CustomError("User not found!",404)
         }
 
-        await existingFollow.remove();
+        if(!loggedInUser.following.includes(userId)){
+            throw new CustomError("Not following this user",400)
+        }
 
-        res.json({
-            message: "User unfollowed successfully",
-        });
+        loggedInUser.following=loggedInUser.following.filter(id=>id.toString()!==userId)
+        userToUnfollow.followers=userToUnfollow.followers.filter(id=>id.toString()!==_Id)
+
+        await loggedInUser.save()
+        await userToUnfollow.save()
+
+        res.status(200).json({message:"Successfully unfollowed user!"})
+
     } catch (err) {
         return res.status(400).json({
             error: "Error while unfollowing user",
